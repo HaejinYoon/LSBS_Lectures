@@ -1,0 +1,61 @@
+---
+title: "Quarto Basics"
+format: html
+jupyter: python3
+---
+
+## 나만의 제목 (h2)
+
+For a demonstration of a line plot on a polar axis, see @fig-polar. 문장을 쭉 쓴다음.\
+다음문장을 써보자(Shift + Enter)
+
+다음 문단을 이어서 써봅시다.
+
+장볼때 다음 것을 사올것!
+
+-   양파
+
+-   배추
+
+    -   너무 상했으면 사오지 말것
+
+-   음료수
+
+#### 표 삽입하기
+
+| Col1 | Col2 | Col3 |
+|------|------|------|
+|      |      |      |
+|      |      |      |
+|      |      |      |
+
+#### 코드 청크 삽입
+
+Ctrl + alt + i
+
+```{python}
+import numpy as np
+
+a = np.array([1, 2, 3])
+a
+```
+
+### Polar 그래프
+
+```{python}
+#| label: fig-polar
+#| fig-cap: "A line plot on a polar axis"
+
+import numpy as np
+import matplotlib.pyplot as plt
+
+r = np.arange(0, 2, 0.01)
+theta = 2 * np.pi * r
+fig, ax = plt.subplots(
+  subplot_kw = {'projection': 'polar'} 
+)
+ax.plot(theta, r)
+ax.set_rticks([0.5, 1, 1.5, 2])
+ax.grid(True)
+plt.show()
+```
