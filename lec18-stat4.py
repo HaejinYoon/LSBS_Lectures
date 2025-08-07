@@ -43,7 +43,10 @@ from scipy.stats import norm
 
 norm.sf(510, loc=500, scale=50/np.sqrt(100))
 
-
+#2 한 제품의 불량률이 5%인 경우, 이 제품 20개를 무작위로 뽑았을 떄:
+# 불량품이 정확히 2개 나올 확률
+# 2개 이하로 나올 확률
+# 3개 이상 나올 확률
 from scipy.stats import binom
 Y = binom(n=20, p=0.05)
 Y.pmf(2)
