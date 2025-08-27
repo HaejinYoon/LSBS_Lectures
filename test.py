@@ -34,3 +34,23 @@ df
 df[df["midterm"]>=85]
 df["final"].sort_values(ascending=False)
 df.sort_values(by='final', ascending=False)
+
+import sqlite3
+# DB 파일 연결 (없으면 자동 생성됨)
+conn = sqlite3.connect("./data/penguins.db")
+
+import pandas as pd
+# SELECT 쿼리 결과를 DataFrame으로 읽기
+df = pd.read_sql_query("SELECT * FROM penguins;", conn)
+df
+print(df.head())
+
+# 예시 DataFrame
+df2 = pd.DataFrame({
+    "name": ["Alice", "Bob"],
+    "age": [25, 30]
+})
+# SQLite 테이블로 저장
+df2.to_sql("people", conn, if_exists="replace", index=False)
+
+conn.close()
