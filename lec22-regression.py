@@ -23,8 +23,31 @@ iris.info()
 import statsmodels.api as sm
 import statsmodels.formula.api as smf
 # 4. 회귀모델 학습 (Petal_Length ~ Petal_Width)
-model = smf.ols("Petal_Length ~ Petal_Width + Sepal_Length", data=iris).fit()
+model = smf.ols("Petal_Length ~ Petal_Width + C(Species)", data=iris).fit()
 print(model.summary())
+model.params
+# 예측용 데이터
+new_data = pd.DataFrame({
+    "Petal_Width" : [0.5],
+    "Species": ["virginica"]
+})
+#예측
+prediction = model.predict(new_data)
+prediction
+
+sm.stats.anova_lm(model)
+
+import statsmodels.api as sm
+from statsmodels.formula.api import ols
+
+
+model1 = ols('Petal_Length ~ Petal_Width', data=iris).fit() #mod1
+model2 = ols('Petal_Length ~ Petal_Width + Sepal_Length + Sepal_Width',
+data=iris).fit() #mod2
+table = sm.stats.anova_lm(model1, model2) #anova
+print(table)
+
+
 intercept, slope = model.params
 
 # 5. 산점도 + 회귀직선 그리기
@@ -192,3 +215,176 @@ beta0 = np.array([0.0, 0.0])
 result = minimize(ssr, beta0, method="BFGS")
 print("최적 베타:", result.x)
 print("최소 SSR:", result.fun)
+
+
+import pandas as pd
+import numpy as np
+url = "https://raw.githubusercontent.com/allisonhorst/palmerpenguins/master/inst/extdata/penguins.csv"
+penguins = pd.read_csv(url)
+print(penguins.head())
+
+np.random.seed(2022)
+train_index = np.random.choice(penguins.shape[0], 200)
+#1 train_index 를 사용하여 펭귄 데이터에서 인덱스에 대응하는 표본들을 뽑아서 train_data를 만드세요. (단, 결측치가 있는 경우 제거)
+train_data = penguins.iloc[train_index]
+train_data = train_data.dropna()
+
+#2 train_data의 펭귄 부리길이 (bill_length_mm)를 부리 깊이 (bill_depth_mm)를 사용하여 산점도를 그려보세요.
+plt.figure(figsize=(8,6))
+sns.scatterplot(data=train_data, x="bill_depth_mm", y="bill_length_mm", hue="species", palette="Set2")
+
+#3. 펭귄 부리길이 (bill_length_mm)를 부리 깊이 (bill_depth_mm)의 상관계수를 구하고, 두 변수사이에 유의미한 상관성이 존재하는지 검정해보세요.
+model = smf.ols("bill_length_mm ~ bill_depth_mm", data=train_data).fit()
+print(model.summary()) 
+
+from scipy.stats import pearsonr
+
+# 두 변수 선택
+x = train_data["bill_length_mm"]
+y = train_data["bill_depth_mm"]
+
+# 피어슨 상관계수와 p-value
+corr, pval = pearsonr(x, y)
+
+print("상관계수 r =", round(corr, 3))
+print("p-value =", pval)
+
+#4 
+# 회귀직선 계산
+x_vals = np.linspace(train_data["bill_depth_mm"].min(),train_data["bill_depth_mm"].max(), 200)
+y_vals = model.params["Intercept"] + model.params["bill_depth_mm"] * x_vals
+
+plt.figure(figsize=(8,6))
+sns.scatterplot(data=train_data, x="bill_depth_mm", y="bill_length_mm", hue="species", palette="Set2")
+plt.plot(x_vals, y_vals, color="red", linewidth=2, label="Regression Line")
+
+#5 F-statistics 값으로 판단
+
+#6 R^2 = 0.062
+# 데이터 전체 변동성의 약 6.2%정도를 회귀 모델이 설명하고 있다.
+
+#7 
+model.params
+#bill_depth_mm의 계수 -0.706191
+# 부리깊이가 1mm 증가하면, 부리길이는 평균적으로 0.7mm 감소하는 경향을 보인다.
+
+model.resid
+
+import scipy.stats as stats
+
+residuals = model2.resid
+fitted_values = model2.fittedvalues
+
+plt.figure(figsize=(15,4))
+plt.subplot(1,2,1)
+plt.scatter(fitted_values, residuals);
+
+plt.subplot(1,2,2)
+stats.probplot(residuals, plot=plt);
+plt.show()
+
+model2 = smf.ols("bill_length_mm ~ bill_depth_mm + C(species)", data=train_data).fit()
+
+#8
+
+#[연습문제] 선형 회귀분석
+#1
+import numpy as np
+from scipy.stats import pearsonr
+x = np.array([1, 2, 3, 4, 5])
+y = np.array([2, 4, 6, 8, 13])
+
+import scipy.stats as stats
+corr_coeff, p_value = stats.pearsonr(x, y)
+print(corr_coeff)
+print(p_value)
+
+#2
+x = np.array([1, 2, 3, 4, 10, 11, 12])
+y = np.array([2, 4, 6, 8, 100, 200, -100])
+corr_coeff, p_value = stats.pearsonr(x, y)
+print(corr_coeff)
+print(p_value)
+ 
+
+#3
+x = np.array([1, 2, 3, 4, 5])
+y = np.array([3, 6, 9, 12, 15])
+
+#4
+
+#5
+import pandas as pd
+from sklearn.datasets import fetch_california_housing
+cal = fetch_california_housing(as_frame=True)
+df = cal.frame
+
+# 독립변수와 종속변수
+X = df[["AveRooms", "AveOccup"]]
+y = df["MedHouseVal"]
+
+# 상수항 추가 (절편 포함)
+X = sm.add_constant(X)
+
+model = sm.OLS(y, X).fit()
+print(model.summary())
+1.6919 + 0.0708 * X["AveRooms"] - 0.0026 * X["AveOccup"]
+
+#6
+import statsmodels.api as sm
+import statsmodels.formula.api as smf
+model = smf.ols('MedHouseVal ~ AveRooms + AveOccup', data=df).fit()
+print(model.summary())
+# AveRooms 22.074, 0.000
+
+#7
+df['IncomeLevel'] = pd.qcut(df['MedInc'], q=3, labels=['Low', 'Mid', 'High'])
+model = smf.ols('MedHouseVal ~ AveRooms + AveOccup + C(IncomeLevel)', data=df).fit()
+print(model.summary())
+
+#8
+from statsmodels.stats.stattools import durbin_watson
+dw_stat = durbin_watson(model.resid)
+print(dw_stat)
+
+from sklearn.datasets import load_diabetes
+# 데이터 불러오기 및 DataFrame 변환
+diabetes = load_diabetes(as_frame=True)
+df2 = diabetes.frame
+
+model = smf.ols('target ~ bmi+ bp + s1', data=df2).fit()
+print(model.summary())
+model.rsquared_adj
+
+ci_df = model.conf_int()
+ci_df.iloc[1,:]
+
+from statsmodels.formula.api import ols
+model2 = ols("target ~ bmi + bp + s1 + s2", data=df2).fit()
+print("model2>>> ", model2.summary())
+
+#15
+model3 = ols("target ~ bmi + bp + s1 + s2 + s3", data=df2).fit()
+print("model3>>>", model3.summary())
+
+#16
+import seaborn as sns
+penguins = sns.load_dataset("penguins").dropna()
+model_peng = ols("body_mass_g ~ bill_length_mm + flipper_length_mm + C(species)", data=penguins).fit()
+print("model_peng>>>>", model_peng.summary())
+# 독립변수와 종속변수
+X = penguins[["bill_length_mm", "flipper_length_mm"]]
+y = penguins["body_mass_g"]
+
+# 절편항 추가
+X = sm.add_constant(X)
+
+model_peng = sm.OLS(y, X).fit()
+print(model_peng.summary())
+
+r2 = model.rsquared
+print("결정계수 R² =", r2)
+
+#18
+model_peng = ols("body_mass_g ~ bill_length_mm + flipper_length_mm + C(sex) + C(species)", data=penguins).fit()
+print("model_peng>>>>", model_peng.summary())
