@@ -37,7 +37,7 @@ test_df = test_df.select_dtypes(include=['int64', 'float64'])
 # 모든 NA 값을 0으로 채움
 # NA말고 다른 값으로 채울 수 있는 칼럼없어?
 test_df = test_df.fillna(0)
-
+test_df = test_df.drop('Id', axis=1)
 result = model.predict(test_df)
 result
 
@@ -255,5 +255,5 @@ num_columns = train_X.select_dtypes('number').columns
 mc_transformer = make_column_transformer(
     (imputer, num_columns),
     (stdscaler, num_columns),
-    reainder="passthrough"
+    remainder="passthrough"
 ).set_output(transform="pandas")
