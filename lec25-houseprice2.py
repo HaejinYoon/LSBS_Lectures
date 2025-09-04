@@ -16,7 +16,21 @@ X_train = train_df.drop(columns='SalePrice')
 y_train = train_df['SalePrice']
 
 from sklearn.linear_model import Lasso
+from sklearn.linear_model import Ridge
+from sklearn.linear_model import ElasticNet
 # alpha == lamda (패널티 가중치 패러미터)
+
+elastic = ElasticNet(alpha=0.1,
+                     l1_ratio=0.6)
+elastic.fit(X_train, y_train)
+elastic.coef_
+elastic.intercept_
+
+ridge = Ridge(alpha=0.00001) 
+ridge.fit(X_train, y_train)
+ridge.coef_
+ridge.intercept_
+
 lasso = Lasso(alpha=0.00001) 
 lasso.fit(X_train, y_train)
 lasso.coef_

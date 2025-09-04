@@ -388,3 +388,10 @@ print("결정계수 R² =", r2)
 #18
 model_peng = ols("body_mass_g ~ bill_length_mm + flipper_length_mm + C(sex) + C(species)", data=penguins).fit()
 print("model_peng>>>>", model_peng.summary())
+
+
+import statsmodels.api as sm
+from statsmodels.formula.api import ols
+
+model = ols("Petal_Length ~ Petal_Width", data=iris).fit()
+sm.stats.anova_lm(model)
