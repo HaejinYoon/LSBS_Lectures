@@ -8,6 +8,8 @@ test_df = pd.read_csv('./data/usedcarprice/test.csv')
 
 train_df.info()
 
+train_df[(train_df['brand'] == 'Lincoln') & (train_df['model'] == 'Town Car Signature')].sort_values('model_year', ascending=False)
+
 # 칼럼 선택
 num_columns = train_df.select_dtypes(include=['number']).columns
 num_columns = num_columns.drop("id")

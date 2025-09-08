@@ -70,3 +70,11 @@ def cal_benefit(num):
 cal_benefit(41.6)
 cal_benefit(38)
 cal_benefit(45)
+
+from sklearn import tree
+import matplotlib.pyplot as plt
+
+best_tree = dct_search.best_estimator_
+
+plt.figure(figsize=(12, 7))
+tree.plot_tree
