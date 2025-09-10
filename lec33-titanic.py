@@ -6,7 +6,7 @@ from sklearn.linear_model import LinearRegression
 train_df = pd.read_csv('./data/titanic/train.csv')
 test_df = pd.read_csv('./data/titanic/test.csv')
 #train_df = train_df.select_dtypes(include=['number'])
-
+train_df.info()
 # 칼럼 선택
 num_columns = train_df.select_dtypes(include=['number']).columns
 num_columns = num_columns.drop("Survived")
@@ -40,7 +40,7 @@ train_df_all
 # 독립변수(X)와 종속변수(y) 분리
 X_train = train_df_all
 y_train = train_df["Survived"]
-
+X_train.info()
 from sklearn.tree import DecisionTreeClassifier
 import numpy as np
 
@@ -352,3 +352,149 @@ onehotencoder = OneHotEncoder(sparse_output = False,
 train_X7_cat = onehotencoder.fit_transform(train_X7_cat)
 test_X7_cat = onehotencoder.transform(test_X7_cat)
 print(train_X7_cat.head())
+
+#==========================================================================================
+# 텍스트 전처리하기
+#==========================================================================================
+
+# 타이타닉 데이터 불러오세요!
+train_df = pd.read_csv('./data/titanic/train.csv')
+test_df = pd.read_csv('./data/titanic/test.csv')
+#train_df = train_df.select_dtypes(include=['number'])
+train_df.info()
+# 칼럼 선택
+num_columns = train_df.select_dtypes(include=['number']).columns
+num_columns = num_columns.drop("Survived")
+cat_columns = train_df.select_dtypes(include=['object']).columns
+cat_columns = cat_columns.drop(["Name", "Ticket", "Cabin"])
+
+# 각 칼럼별 결측지 몇 개가 있을까
+train_df.isna().sum(axis=0)
+
+# 결측치 채우기 (간단히 처리)
+from sklearn.impute import SimpleImputer
+freq_impute = SimpleImputer(strategy='most_frequent')
+mean_impute = SimpleImputer(strategy='mean')
+
+train_df[cat_columns] = freq_impute.fit_transform(train_df[cat_columns])
+train_df[num_columns] = mean_impute.fit_transform(train_df[num_columns])
+freq_impute.statistics_
+
+from sklearn.preprocessing import OneHotEncoder
+from sklearn.preprocessing import StandardScaler
+onehot = OneHotEncoder(handle_unknown='ignore', 
+                       sparse_output=False).set_output(transform="pandas")
+std_scaler = StandardScaler().set_output(transform="pandas")
+
+train_df_cat = onehot.fit_transform(train_df[cat_columns])
+train_df_num = std_scaler.fit_transform(train_df[num_columns])
+
+train_df_all = pd.concat([train_df_num, train_df_cat], axis = 1)
+train_df_all
+train_df_all.isna().sum(axis=0)
+
+from sklearn.feature_extraction.text import CountVectorizer
+name_list = train_df["Name"].astype(str)
+vectorizer = CountVectorizer(
+    stop_words="english",  # 불용어 처리
+    max_features=10,
+)  # top3 단어만
+X_name = vectorizer.fit_transform(name_list)
+print(type(X_name))
+
+name_features = pd.DataFrame(
+    X_name.toarray(), columns=vectorizer.get_feature_names_out()
+)
+print(name_features.head(10))
+name_features.shape
+name_features.sum(axis=0)
+
+train_with_names = pd.concat([train_df_all.reset_index(drop=True), name_features], axis=1)
+train_with_names
+
+# 독립변수(X)와 종속변수(y) 분리
+X_train = train_with_names
+y_train = train_with_names["Survived"]
+X_train.info()
+from sklearn.tree import DecisionTreeClassifier
+import numpy as np
+
+dct = DecisionTreeClassifier(criterion="gini")
+dct.get_params()
+
+dct_params = {'max_depth' : np.arange(1, 8),
+                  'ccp_alpha': np.linspace(0, 1, 5)}
+# 교차검증
+from sklearn.model_selection import KFold, GridSearchCV
+cv = KFold(n_splits=5, shuffle=True, random_state=2025)
+
+# 그리드서치
+dct_search = GridSearchCV(estimator=dct, 
+                              param_grid=dct_params, 
+                              cv = cv, 
+                              scoring='accuracy')
+dct_search.fit(X_train, y_train)
+dct_search.best_params_
+
+#테스트 데이터 채우기
+test_df[cat_columns] = freq_impute.transform(test_df[cat_columns])
+test_df[num_columns] = mean_impute.transform(test_df[num_columns])
+
+test_df_cat = onehot.transform(test_df[cat_columns])
+test_df_num = std_scaler.transform(test_df[num_columns])
+
+test_df_all = pd.concat([test_df_num, test_df_cat], axis = 1)
+test_with_names = pd.concat([test_df_all.reset_index(drop=True), name_features], axis=1)
+test_with_names = test_with_names.dropna()
+dct_search.predict(test_with_names)
+
+y_pred = dct_search.predict(test_with_names)
+len(y_pred)
+submit = pd.read_csv('./data/titanic/gender_submission.csv')
+submit["Survived"]=y_pred
+
+# CSV로 저장
+submit.to_csv('./data/titanic/text-model.csv', index=False)
+
+
+#==========================================================================================
+# 수치형 변수 이산화하기
+#==========================================================================================
+
+
+
+
+import numpy as np
+import pandas as pd
+from sklearn.preprocessing import KBinsDiscretizer
+
+X = np.array([[0, 1, 1, 2, 5, 10, 11, 14, 18]]).T
+
+kbd = KBinsDiscretizer(n_bins = 3, strategy = 'uniform') # 구간의 길이가 동일
+X_bin = kbd.fit_transform(X).toarray()
+print(kbd.bin_edges_)
+
+kbd2 = KBinsDiscretizer(n_bins = 4, 
+                        strategy = 'quantile') # 사분위수를 기준으로 이산화
+X_bin2 = kbd2.fit_transform(X).toarray()
+print(kbd2.bin_edges_)
+
+print(np.quantile(X,[0.25, 0.5, 0.75, 1]))
+
+
+train_bike = pd.read_csv('https://raw.githubusercontent.com/YoungjinBD/data/main/bike_train.csv')
+test_bike = pd.read_csv('https://raw.githubusercontent.com/YoungjinBD/data/main/bike_test.csv')
+print(train_bike.head(2))
+
+train_bike['weather'].value_counts()
+
+freq = train_bike['weather'].value_counts(normalize = True)
+print(freq)
+
+prob_columns = train_bike['weather'].map(freq)
+prob_columns.head(2)
+
+train_bike['weather'] = train_bike['weather'].mask(prob_columns < 0.1, 'other')
+test_bike['weather'] = np.where(test_bike['weather'].isin([4]), 'other', test_bike['weather'])
+
+print(train_bike['weather'].value_counts())
